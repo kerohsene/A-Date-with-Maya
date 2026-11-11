@@ -112,6 +112,7 @@ bg cafe linear-gradient(#2a0505,#5c1111 65%,#a63a2a)
 # Sprite files live in the images folder next to this file (names are case-sensitive on GitHub Pages).
 sprite maya default images/maya.png
 sprite maya happy images/maya_happy.png
+sprite maya menu images/maya_mm.png
 # More expressions: sprite maya sad images/maya_sad.png   (or a template: sprites maya images/maya_{expr}.png)
 # Image backgrounds work too: bg cafe images/cafe.jpg
 
@@ -285,7 +286,7 @@ function startGame(st){
 function toTitle(){
   auto=skip=false;sync();clearTimeout(autoT);clearInterval(typing);Aud.start("off");
   $("#title").style.display="block";$("#hud").style.display="none";$("#box").style.display="none";$("#choices").innerHTML="";$("#sprites").innerHTML="";
-  $("#tt").textContent=META.title;fillSprite($("#art"),CH.maya?"maya":Object.keys(CH)[0],"happy");bokeh();document.title=META.title;
+  $("#tt").textContent=META.title;fillSprite($("#art"),CH.maya?"maya":Object.keys(CH)[0],"menu");bokeh();document.title=META.title;
   $("#b1").style.opacity=0;$("#b2").style.opacity=0;$("#b1").dataset.k="";$("#b2").dataset.k="";
 }
 
