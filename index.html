@@ -109,10 +109,11 @@ char maya "Maya" #e0457b
 bg cafe linear-gradient(#2a0505,#5c1111 65%,#a63a2a)
 
 # --- IMAGES ---
-# Maya's art: add maya.png with "Add images" below (or keep it next to this HTML file).
-sprite maya default maya.png
-# Optional per-expression art: sprites maya {expr}.png   or   sprite maya happy maya_happy.png
-# Image backgrounds work too: bg cafe cafe.jpg
+# Sprite files live in the images folder next to this file (names are case-sensitive on GitHub Pages).
+sprite maya default images/maya.png
+sprite maya happy images/maya_happy.png
+# More expressions: sprite maya sad images/maya_sad.png   (or a template: sprites maya images/maya_{expr}.png)
+# Image backgrounds work too: bg cafe images/cafe.jpg
 
 label start
 scene cafe
