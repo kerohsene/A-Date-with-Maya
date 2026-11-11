@@ -64,7 +64,7 @@ button:focus-visible,textarea:focus-visible,input:focus-visible{outline:.3cqw so
 #tt{margin:0;font:700 5.8cqw/1 var(--ui);text-wrap:balance;transform:rotate(-2deg);transform-origin:left top}
 #menu{padding-left:1cqw;display:flex;flex-direction:column;gap:1.8cqw;align-items:flex-start}
 #menu button{position:relative;background:none;border:0;border-radius:0;padding:0;font:600 3.2cqw/1 var(--ui);-webkit-text-stroke:.7cqw var(--ink);text-shadow:.35cqw .35cqw 0 var(--ink);transition:transform .12s;animation:menuin .5s cubic-bezier(.2,.9,.3,1) backwards}
-#menu button:nth-child(1){animation-delay:.5s}#menu button:nth-child(2){animation-delay:.6s}#menu button:nth-child(3){animation-delay:.7s}
+#menu button:nth-child(1){animation-delay:.5s}#menu button:nth-child(2){animation-delay:.6s}#menu button:nth-child(3){animation-delay:.7s}#menu button:nth-child(4){animation-delay:.8s}
 #menu button:hover,#menu button:focus-visible{background:none;color:var(--skin);transform:translateX(1.2cqw);outline:none}
 #menu button:hover::before,#menu button:focus-visible::before{content:"▶";position:absolute;left:-2.8cqw;top:.5cqw;font-size:2.2cqw;-webkit-text-stroke:0;text-shadow:none;color:var(--skin)}
 #title .ed{position:absolute;left:4.4cqw;bottom:8.4cqw;display:flex;gap:2.4cqw}
@@ -118,6 +118,16 @@ input[type=range]{accent-color:var(--hoodie)}
 @keyframes cardpop{from{opacity:0;transform:translateY(2cqw) scale(.94)}}
 @keyframes pop{from{transform:rotate(-1.5deg) scale(.6)}}
 @keyframes pulse{50%{box-shadow:0 0 0 .5cqw #f5a85a66}}
+#cg{position:absolute;inset:0;opacity:0;transition:opacity .8s;pointer-events:none;background-size:cover;animation:kb 30s ease-in-out infinite alternate}
+.miss.big{width:100%;border:0;font-size:3cqw}
+.gal{display:grid;grid-template-columns:repeat(3,1fr);gap:1.4cqw;width:100%;align-content:start}
+.gi{display:flex;flex-direction:column;gap:.6cqw;padding:.6cqw .6cqw 1cqw;text-align:center;background:#fff4e8;color:#2a1414;border:.3cqw solid var(--ink);border-radius:1cqw;box-shadow:.4cqw .4cqw 0 var(--shadow);font:400 2cqw var(--hand)}
+.gi .th{aspect-ratio:16/9;border-radius:.6cqw;border:.2cqw solid var(--ink);background:#1c0a0a center/cover no-repeat;display:grid;place-items:center;font:700 4cqw var(--ui);color:#ffffff55}
+.gi:not(.lock):hover{background:var(--hoodie);color:var(--paper)}
+.gi.lock{opacity:.7;cursor:default}.gi.lock:hover{background:#fff4e8;color:#2a1414}
+#viewer{position:absolute;inset:0;display:none;z-index:8;background:#000 center/contain no-repeat;cursor:pointer}
+#viewer.open{display:block;animation:fadein .25s}
+#viewer span{position:absolute;bottom:1.5cqw;left:0;right:0;text-align:center;font:600 1.7cqw var(--ui);color:#fff;text-shadow:0 0 .8cqw #000}
 #tt span{display:inline-block;animation:wordin .6s cubic-bezier(.2,1.5,.4,1) backwards;animation-delay:calc(.2s + var(--i)*.13s)}
 #name.pop{animation:pop .3s cubic-bezier(.2,1.8,.4,1)}
 #choices button{animation:cardin .4s cubic-bezier(.2,.9,.3,1) backwards;animation-delay:calc(var(--k)*.07s)}
@@ -133,7 +143,7 @@ button:active{transform:translate(.2cqw,.2cqw)}
 <body>
 <div id="wrap"><div id="stage">
   <div class="bg" id="b1"></div><div class="bg" id="b2" style="opacity:0"></div>
-  <div id="sprites"></div><div id="fx"></div><div id="vig"></div>
+  <div id="sprites"></div><div id="cg"></div><div id="fx"></div><div id="vig"></div>
   <div id="choices"></div>
   <div id="box" style="display:none"><div id="name"></div><div id="text"></div><div id="next">▼</div></div>
   <div id="hud" style="display:none">
@@ -144,10 +154,10 @@ button:active{transform:translate(.2cqw,.2cqw)}
     <div id="art"></div>
     <svg class="bgs" viewBox="0 0 683 384" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,0 274,0 226,384 0,384" fill="#2a0e0e" opacity=".35"/><defs><clipPath id="pc"><polygon points="0,0 260,0 212,384 0,384"/></clipPath></defs><polygon points="0,0 260,0 212,384 0,384" fill="#a8241a"/><g clip-path="url(#pc)"><rect x="0" y="342" width="300" height="42" fill="#7e1a12"/><polyline points="-10,354 0,370 10,354 20,370 30,354 40,370 50,354 60,370 70,354 80,370 90,354 100,370 110,354 120,370 130,354 140,370 150,354 160,370 170,354 180,370 190,354 200,370 210,354 220,370 230,354 240,370 250,354 260,370 270,354 280,370" fill="none" stroke="#0d0d0d" stroke-width="3" stroke-linejoin="round"/><line x1="0" y1="342" x2="300" y2="342" stroke="#0d0d0d" stroke-width="3.5"/></g><line x1="260" y1="0" x2="212" y2="384" stroke="#0d0d0d" stroke-width="6" vector-effect="non-scaling-stroke"/></svg>
     <div id="left"><h1 id="tt" class="ol">A Date with Maya</h1>
-    <div id="menu"><button data-a="cont" class="ol" id="bcont" style="display:none">Continue</button><button data-a="new" class="ol">New Game</button><button data-a="load" class="ol">Load Game</button></div></div>
+    <div id="menu"><button data-a="cont" class="ol" id="bcont" style="display:none">Continue</button><button data-a="new" class="ol">New Game</button><button data-a="load" class="ol">Load Game</button><button data-a="gal" class="ol">Gallery</button></div></div>
     <div class="ed"><button data-a="set">Settings</button><button data-a="edit">Script editor</button></div>
   </div>
-  <div id="fade"></div><div id="toast"></div>
+  <div id="fade"></div><div id="viewer"></div><div id="toast"></div>
   <div id="panel"><div id="card"><h2 id="ph"></h2><div id="pbody"></div><div id="pfoot"></div></div></div>
 </div></div>
 <div id="rot">Rotate your phone for a bigger picture ↻</div>
@@ -170,6 +180,11 @@ bg hall images/hall.jpg
 sprite maya neutral images/maya.png
 sprite maya happy images/maya_happy.png
 sprite maya menu images/maya_mm.png
+
+# --- CGS: full-screen event art. Define with: cg name file "Gallery title"
+# Show with "cg name", return to the normal scene with "cg off". Seen CGs unlock in the Gallery.
+cg dusk images/cg_room.jpg "Dusk in Maya’s room"
+cg hallway images/cg_hall.jpg "A look down the hall"
 # More expressions: sprite maya sad images/maya_sad.png   (or a template: sprites maya images/maya_{expr}.png)
 
 label start
@@ -178,14 +193,22 @@ show maya center happy
 maya: Hi! I’m Maya.
 show maya center neutral
 "The story isn’t finished yet. This is a placeholder scene."
-"Open the script editor on the title screen to start writing it."
+"Here’s what a CG scene looks like."
+cg dusk
+maya: A full-screen illustration takes over the whole scene…
+"…and it unlocks in the Gallery on the main menu."
+cg hallway
+maya: You can switch from one CG to another, too.
+cg off
+maya: And then we’re back to normal.
+"Open the script editor on the title screen to start writing the story."
 end
 `;
 
 /* ---------- Compiler ---------- */
-let P=[],LAB={},CH={},BG={},META={title:"A Date with Maya",subtitle:""},SPR={},ASSETS={};
+let P=[],LAB={},CH={},BG={},META={title:"A Date with Maya",subtitle:""},SPR={},ASSETS={},CGS={};
 function compile(src){
-  P=[];LAB={};CH={};BG={};SPR={};META={title:"Visual Novel",subtitle:""};
+  P=[];LAB={};CH={};BG={};SPR={};CGS={};META={title:"Visual Novel",subtitle:""};
   let ch=null,m;
   src.split(/\r?\n/).forEach((raw,i)=>{
     const l=raw.trim(); if(!l||l[0]=="#")return;
@@ -200,6 +223,8 @@ function compile(src){
     if(m=l.match(/^subtitle\s+(.+)/)){META.subtitle=m[1];return}
     if(m=l.match(/^char\s+(\w+)\s+"(.+?)"\s+(#\w+)/)){CH[m[1]]={n:m[2],c:m[3]};return}
     if(m=l.match(/^bg\s+(\w+)\s+(.+)/)){BG[m[1]]=m[2];return}
+    if(m=l.match(/^cg\s+(\w+)\s+(\S+)(?:\s+"(.+)")?$/)){CGS[m[1]]={src:m[2],title:m[3]||m[1]};return}
+    if(m=l.match(/^cg\s+(\w+)$/)){P.push({t:"cg",n:m[1]=="off"?null:m[1]});return}
     if(m=l.match(/^sprites\s+(\w+)\s+(\S+)/)){(SPR[m[1]]=SPR[m[1]]||{map:{}}).tpl=m[2];return}
     if(m=l.match(/^sprite\s+(\w+)\s+(\w+)\s+(\S+)/)){(SPR[m[1]]=SPR[m[1]]||{map:{}}).map[m[2]]=m[3];return}
     if(m=l.match(/^label\s+(\w+)/)){LAB[m[1]]=P.length;return}
@@ -216,6 +241,7 @@ function compile(src){
     P.push({t:"say",w:null,x:l.replace(/^"|"$/g,"")});
   });
   P.forEach(p=>{
+    if(p.t=="cg"&&p.n&&!CGS[p.n])throw new Error("Unknown CG: "+p.n);
     const ls=p.o?p.o.map(o=>o.l):p.l?[p.l]:[];
     ls.forEach(x=>{if(!(x in LAB))throw new Error("Unknown label: "+x)});
   });
@@ -264,7 +290,7 @@ Aud.sfx=function(f,d=.04,g=.05){const v=store.get("maya_sfx",.4);if(!v)return;tr
 /* ---------- Engine ---------- */
 let lastWho="",hist=[],cur=null,typing=null,auto=false,skip=false,autoT=null,flip=0,busy=false;
 const clone=o=>JSON.parse(JSON.stringify(o));
-const newState=()=>({pc:0,v:{},bg:null,sp:{},mu:"off",log:[]});
+const newState=()=>({pc:0,v:{},bg:null,cg:null,sp:{},mu:"off",log:[]});
 
 function renderScene(instant){
   const back=flip?$("#b2"):$("#b1"),front=flip?$("#b1"):$("#b2");
@@ -274,7 +300,7 @@ function renderScene(instant){
   Object.entries(S.sp).forEach(([id,s])=>{let d=old[id];delete old[id];
     if(!d||d.dataset.e!=s.e){const had=!!d;if(d)d.remove();d=document.createElement("div");d.className="sp"+(had?" swap":"");d.dataset.id=id;d.dataset.e=s.e;fillSprite(d,id,s.e);box.appendChild(d)}
     d.dataset.p=s.p;d.style.left={left:"20%",center:"50%",right:"80%"}[s.p]||"50%"});
-  Object.values(old).forEach(d=>d.remove());
+  Object.values(old).forEach(d=>d.remove());showCG(S.cg);
 }
 function snap(){hist.push(clone(S));if(hist.length>300)hist.shift()}
 
@@ -284,7 +310,8 @@ function run(){
     const p=P[S.pc];
     if(!p){return endGame()}
     switch(p.t){
-      case"scene":S.bg=p.b;S.sp={};renderScene();S.pc++;break;
+      case"scene":S.bg=p.b;S.sp={};S.cg=null;renderScene();S.pc++;break;
+      case"cg":S.cg=p.n;if(p.n)unlockCG(p.n);renderScene();S.pc++;break;
       case"show":S.sp[p.id]={p:p.p,e:p.e};renderScene();S.pc++;break;
       case"hide":delete S.sp[p.id];renderScene();S.pc++;break;
       case"set":{const a=S.v[p.v]??0,b=val(p.e);S.v[p.v]=p.o=="="?b:p.o=="+="?a+b:a-b;S.pc++;break}
@@ -345,15 +372,25 @@ function startGame(st){
 function toTitle(){
   auto=skip=false;sync();clearTimeout(autoT);clearInterval(typing);Aud.start("off");
   $("#title").style.display="block";$("#hud").style.display="none";$("#box").style.display="none";$("#choices").innerHTML="";$("#sprites").innerHTML="";
-  $("#tt").innerHTML=META.title.split(" ").map((w,i)=>`<span style="--i:${i}">${esc(w)}</span>`).join(" ");fillSprite($("#art"),CH.maya?"maya":Object.keys(CH)[0],"menu");document.title=META.title;$("#stage").classList.remove("hideui");$("#bcont").style.display=Object.keys(store.get("maya_saves",{})).length?"":"none";
+  $("#tt").innerHTML=META.title.split(" ").map((w,i)=>`<span style="--i:${i}">${esc(w)}</span>`).join(" ");fillSprite($("#art"),CH.maya?"maya":Object.keys(CH)[0],"menu");document.title=META.title;$("#cg").style.opacity=0;$("#cg").dataset.n="";$("#stage").classList.remove("hideui");$("#bcont").style.display=Object.keys(store.get("maya_saves",{})).length?"":"none";
   $("#b1").style.opacity=0;$("#b2").style.opacity=0;$("#b1").dataset.k="";$("#b2").dataset.k="";
 }
 
 /* ---------- Panels ---------- */
+const cgs=()=>store.get("maya_cgs",[]);
+function unlockCG(n){const u=cgs();if(u.includes(n))return;u.push(n);store.set("maya_cgs",u);toast("CG unlocked: "+CGS[n].title)}
+function showCG(n){const c=$("#cg");if((c.dataset.n||"")===(n||""))return;c.dataset.n=n||"";c.innerHTML="";
+  if(!n){c.style.opacity=0;return}
+  const u=resolve(CGS[n].src);c.style.background=`url("${u}") center/cover no-repeat #1a0808`;c.style.opacity=1;
+  const im=new Image();im.onerror=()=>{c.style.background="#1a0808";const m=document.createElement("div");m.className="miss big";m.append("CG missing");const sm=document.createElement("small");sm.textContent=n+" · "+CGS[n].src;m.append(sm);c.appendChild(m)};im.src=u}
+function gallery(){const u=cgs(),k=Object.keys(CGS),got=k.filter(n=>u.includes(n)).length;
+  const h=k.map(n=>u.includes(n)?`<button class="gi" data-cg="${n}"><div class="th" style="background-image:url('${resolve(CGS[n].src)}')"></div>${esc(CGS[n].title)}</button>`:`<button class="gi lock" disabled><div class="th">?</div>Locked</button>`).join("");
+  panel(`Gallery (${got}/${k.length})`,k.length?`<div class="gal">${h}</div>`:'<p>This script has no CGs yet. Add one with: cg name images/file.jpg "Title"</p>',true)}
+function openViewer(n){const v=$("#viewer");v.style.backgroundImage=`url("${resolve(CGS[n].src)}")`;v.innerHTML=`<span>${esc(CGS[n].title)} · click to close</span>`;v.classList.add("open")}
 function panel(title,html,wide){$("#card").classList.toggle("wide",!!wide);$("#pfoot").innerHTML='<button data-a="close">Close</button>';$("#ph").textContent=title;$("#pbody").innerHTML=html;$("#pbody").scrollTop=0;$("#panel").classList.add("open")}
 function toast(t){const e=$("#toast");e.textContent=t;e.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("on"),1600)}
 function fade(fn){const f=$("#fade");f.classList.add("on");setTimeout(()=>{fn();requestAnimationFrame(()=>f.classList.remove("on"))},320)}
-function pause(){panel("Paused",`<div class="pm">${[["Resume","close"],["Save","save"],["Load","load"],["Settings","set"],["Backlog","log"],["Hide UI","hide"],["Fullscreen","fs"],["Title screen","quit"]].map(([t,a])=>`<button data-a="${a}">${t}</button>`).join("")}</div>`)}
+function pause(){panel("Paused",`<div class="pm">${[["Save","save"],["Load","load"],["Settings","set"],["Backlog","log"],["Gallery","gal"],["Hide UI","hide"],["Fullscreen","fs"],["Title screen","quit"]].map(([t,a])=>`<button data-a="${a}">${t}</button>`).join("")}</div>`)}
 function closePanel(){$("#panel").classList.remove("open")}
 const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 function slots(mode){const sv=store.get("maya_saves",{});let h="";
@@ -372,12 +409,14 @@ function settings(){
 function editor(){panel("Script editor",`<textarea id="src" spellcheck="false"></textarea>`,true);$("#src").value=store.get("maya_script",DEMO);
   $("#pfoot").insertAdjacentHTML("afterbegin",`<button id="runb" data-a="run">Run script</button> <button id="rstb" data-a="reset">Reset to demo</button> <button data-a="img">Add images</button> <button data-a="clr">Clear images</button> <span id="al"></span> <span id="err"></span>`);listAssets()}
 function loadScript(src,save){
-  try{compile(src);if(save)store.set("maya_script",src);$("#err").textContent="";toTitle();return true}
+  try{compile(src);if(save)store.set("maya_script",src);{const er=$("#err");if(er)er.textContent=""}toTitle();return true}
   catch(e){const el=$("#err");if(el)el.textContent=e.message;return false}
 }
 
 /* ---------- Wiring ---------- */
 document.addEventListener("click",e=>{
+  if($("#viewer").classList.contains("open")){$("#viewer").classList.remove("open");return}
+  const gi=e.target.closest("[data-cg]");if(gi){openViewer(gi.dataset.cg);return}
   const st=$("#stage");if(st.classList.contains("hideui")&&!e.target.closest("#panel")){st.classList.remove("hideui");return}
   if(e.target.closest("button"))Aud.sfx(620,.05,.06);
   const a=e.target.closest("[data-a]"),sl=e.target.closest("[data-slot]");
@@ -388,7 +427,7 @@ document.addEventListener("click",e=>{
     return}
   if(a){e.stopPropagation();const k=a.dataset.a;
     ({back:rollback,log:showLog,auto(){auto=!auto;skip=false;sync();if(auto&&!typing)advance()},skip(){skip=!skip;auto=false;sync();if(skip&&!typing)advance()},
-     save(){slots("save")},load(){slots("load")},set:settings,quit(){closePanel();fade(toTitle)},menu:pause,hide(){closePanel();$("#stage").classList.add("hideui")},fs(){closePanel();const e=$("#stage");document.fullscreenElement?document.exitFullscreen():e.requestFullscreen&&e.requestFullscreen()},close:closePanel,
+     save(){slots("save")},load(){slots("load")},set:settings,quit(){closePanel();fade(toTitle)},gal:gallery,menu:pause,hide(){closePanel();$("#stage").classList.add("hideui")},fs(){closePanel();const e=$("#stage");document.fullscreenElement?document.exitFullscreen():e.requestFullscreen&&e.requestFullscreen()},close:closePanel,
      new(){fade(()=>startGame())},cont(){const sv=store.get("maya_saves",{}),l=Object.values(sv).sort((x,y)=>new Date(y.when)-new Date(x.when))[0];if(l)fade(()=>startGame(clone(l.st)));else slots("load")},
      edit:editor,img(){$("#fi").click()},clr(){clearAssets().then(()=>{listAssets();toTitle()})},run(){if(loadScript($("#src").value,true))closePanel()},reset(){$("#src").value=DEMO;if(loadScript(DEMO,true))closePanel()}})[k]();
     return}
@@ -399,7 +438,7 @@ document.addEventListener("click",e=>{
 document.addEventListener("keydown",e=>{
   if(e.target.tagName=="TEXTAREA"||e.target.tagName=="INPUT")return;
   const open=$("#panel").classList.contains("open"),inGame=$("#title").style.display=="none";
-  if(e.key=="Escape"){open?closePanel():inGame&&pause();return}
+  if(e.key=="Escape"){if($("#viewer").classList.contains("open")){$("#viewer").classList.remove("open");return}open?closePanel():inGame&&pause();return}
   if(!inGame||open)return;
   if(e.key==" "||e.key=="Enter"){e.preventDefault();auto=skip=false;sync();advance()}
   else if(e.key=="Backspace"||e.key=="ArrowLeft")rollback();
