@@ -19,6 +19,8 @@ html{scroll-padding-top:env(safe-area-inset-top,0px)}
 .sp svg{height:100%;filter:drop-shadow(0 0 2cqw #0007)}
 .sp img{height:100%;width:auto;filter:drop-shadow(0 0 2cqw #0007)}
 #art img{height:100%;width:auto;filter:drop-shadow(0 0 2.4cqw #2b0a1480)}
+.miss{height:100%;width:18cqw;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6cqw;text-align:center;border:2px dashed #ffffff88;background:#00000044;font:600 1.8cqw var(--sans);color:var(--cream)}
+.miss small{font:400 1.4cqw var(--sans);opacity:.75}
 #al{font:1.4cqw var(--sans);opacity:.7}
 @keyframes in{from{opacity:0;transform:translate(-50%,16px)}}
 #fx{position:absolute;inset:0;pointer-events:none;background:#fff;opacity:0}
@@ -106,14 +108,11 @@ title A Date with Maya
 char maya "Maya" #e0457b
 bg cafe linear-gradient(#2a0505,#5c1111 65%,#a63a2a)
 
-# --- IMAGES: remove the # to use your own art (add the files with "Add images" below).
-# One file per expression, using {expr} as a placeholder (neutral, happy, sad, angry, surprised, or any name you use in "show"):
-# sprites maya images/maya_{expr}.png
-# Or one expression at a time ("default" is used when an expression has no image):
-# sprite maya default images/maya.png
-# sprite maya happy images/maya_happy.png
-# Backgrounds can be image files too:
-# bg cafe images/cafe.jpg
+# --- IMAGES ---
+# Maya's art: add maya.png with "Add images" below (or keep it next to this HTML file).
+sprite maya default maya.png
+# Optional per-expression art: sprites maya {expr}.png   or   sprite maya happy maya_happy.png
+# Image backgrounds work too: bg cafe cafe.jpg
 
 label start
 scene cafe
@@ -174,27 +173,12 @@ const ev=e=>e.split(/\s+or\s+/).some(o=>o.split(/\s+and\s+/).every(cmp));
 const interp=t=>t.replace(/\{(\w+)\}/g,(_,k)=>S.v[k]??0);
 
 /* ---------- Sprites (generated SVG so the engine needs no assets) ---------- */
-const dk=(h,f)=>"#"+h.slice(1).match(/../g).map(x=>Math.round(parseInt(x,16)*f).toString(16).padStart(2,"0")).join("");
-function sprite(color,e){
-  const hr=dk(color,.32),S='stroke="#2a1018" stroke-width="3.5" fill="none" stroke-linecap="round"';
-  const eye=x=>e=="happy"?`<path d="M${x-9} 117q9-11 18 0" ${S}/>`:`<ellipse cx="${x}" cy="116" rx="${e=="surprised"?7:5}" ry="${e=="surprised"?10:8}" fill="#2a1018"/><circle cx="${x+2}" cy="112" r="2.2" fill="#fff"/>`;
-  const br=e=="sad"?["M72 101l16-5","M128 101l-16-5"]:e=="angry"?["M72 96l16 6","M128 96l-16 6"]:e=="surprised"?["M74 94q12-8 22 0","M126 94q-12-8-22 0"]:["M74 100q12-5 22 0","M126 100q-12-5-22 0"];
-  const M='stroke="#b8324f" stroke-width="3" fill="none" stroke-linecap="round"';
-  const mouth={happy:'<path d="M88 138q12 13 24 0z" fill="#b8324f"/>',sad:`<path d="M91 143q9-8 18 0" ${M}/>`,angry:`<path d="M91 141h18" ${M}/>`,surprised:'<ellipse cx="100" cy="141" rx="5" ry="7" fill="#b8324f"/>'}[e]||`<path d="M92 139q8 5 16 0" ${M}/>`;
-  return `<svg viewBox="0 0 200 420" xmlns="http://www.w3.org/2000/svg"><path d="M50 125C36 56 68 34 100 34s64 22 50 91c6 60 2 120 26 150H24c24-30 20-90 26-150z" fill="${hr}"/>
-  <path d="M14 420c0-118 34-152 86-160 52 8 86 42 86 160z" fill="${color}"/><path d="M76 262l24 46 24-46z" fill="#fff3e6"/>
-  <rect x="89" y="206" width="22" height="58" rx="8" fill="#eebf9f"/><ellipse cx="100" cy="124" rx="44" ry="52" fill="#fbdcc6"/>
-  <ellipse cx="70" cy="134" rx="9" ry="5" fill="#ff7a8a" opacity=".35"/><ellipse cx="130" cy="134" rx="9" ry="5" fill="#ff7a8a" opacity=".35"/>
-  ${eye(84)}${eye(116)}<path d="${br[0]}" ${S} stroke-width="2.5" stroke="${hr}"/><path d="${br[1]}" ${S} stroke-width="2.5" stroke="${hr}"/>${mouth}
-  <path d="M54 124C50 62 78 46 104 52c28 4 46 30 42 72-12-30-30-42-52-42-20 0-34 14-40 42z" fill="${hr}"/>
-  <path d="M54 124q-8 64 6 122M146 124q8 64-6 122" stroke="${hr}" stroke-width="12" fill="none" stroke-linecap="round"/></svg>`;
-}
 /* ---------- Image assets & sprites ---------- */
 const resolve=p=>ASSETS[p.split(/[\\/]/).pop()]||p;
 const bgCss=v=>/^[^\s(]+\.(png|jpe?g|webp|gif|avif|svg)$/i.test(v)?`url("${resolve(v)}") center/cover no-repeat`:v.replace(/url\(["']?([^"')]+)["']?\)/,(_,p)=>`url("${resolve(p)}") center/cover no-repeat`);
 function fillSprite(box,id,e){
   const c=SPR[id]||{map:{}},t=x=>c.tpl&&c.tpl.replace("{expr}",x);
-  const L=[c.map[e],t(e),t("neutral"),c.map.neutral,c.map.default].filter(Boolean),vec=()=>{box.innerHTML=sprite(CH[id]?CH[id].c:"#888",e)};
+  const L=[c.map[e],t(e),t("neutral"),c.map.neutral,c.map.default].filter(Boolean),vec=()=>{box.innerHTML="";const m=document.createElement("div");m.className="miss";m.append("Sprite missing");const sm=document.createElement("small");sm.textContent=(CH[id]?CH[id].n:id)+" · "+e;m.append(sm);box.appendChild(m)};
   if(!L.length)return vec();
   let i=0;const im=new Image();im.alt=CH[id]?CH[id].n:id;im.draggable=false;
   im.onerror=()=>{++i<L.length?im.src=resolve(L[i]):vec()};
