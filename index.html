@@ -60,11 +60,11 @@ button:focus-visible,textarea:focus-visible,input:focus-visible{outline:.3cqw so
 @keyframes rise{from{opacity:0;transform:translate(-44%,0)}}
 #title .bgs{position:absolute;inset:0;width:100%;height:100%;animation:wipe .65s cubic-bezier(.2,.9,.3,1)}
 .ol{color:var(--paper);paint-order:stroke fill;-webkit-text-stroke:.9cqw var(--ink);text-shadow:.45cqw .45cqw 0 var(--ink)}
-#left{position:absolute;left:3.8cqw;top:4.5cqw;width:29cqw;display:flex;flex-direction:column;gap:4cqw}
+#left{position:absolute;left:3.8cqw;top:4.5cqw;width:29cqw;display:flex;flex-direction:column;gap:3cqw}
 #tt{margin:0;font:700 5.8cqw/1 var(--ui);text-wrap:balance;transform:rotate(-2deg);transform-origin:left top}
-#menu{padding-left:1cqw;display:flex;flex-direction:column;gap:1.8cqw;align-items:flex-start}
+#menu{padding-left:1cqw;display:flex;flex-direction:column;gap:1.5cqw;align-items:flex-start}
 #menu button{position:relative;background:none;border:0;border-radius:0;padding:0;font:600 3.2cqw/1 var(--ui);-webkit-text-stroke:.7cqw var(--ink);text-shadow:.35cqw .35cqw 0 var(--ink);transition:transform .12s;animation:menuin .5s cubic-bezier(.2,.9,.3,1) backwards}
-#menu button:nth-child(1){animation-delay:.5s}#menu button:nth-child(2){animation-delay:.6s}#menu button:nth-child(3){animation-delay:.7s}#menu button:nth-child(4){animation-delay:.8s}
+#menu button:nth-child(1){animation-delay:.5s}#menu button:nth-child(2){animation-delay:.6s}#menu button:nth-child(3){animation-delay:.7s}#menu button:nth-child(4){animation-delay:.8s}#menu button:nth-child(5){animation-delay:.9s}
 #menu button:hover,#menu button:focus-visible{background:none;color:var(--skin);transform:translateX(1.2cqw);outline:none}
 #menu button:hover::before,#menu button:focus-visible::before{content:"▶";position:absolute;left:-2.8cqw;top:.5cqw;font-size:2.2cqw;-webkit-text-stroke:0;text-shadow:none;color:var(--skin)}
 #title .ed{position:absolute;left:4.4cqw;bottom:8.4cqw;display:flex;gap:2.4cqw}
@@ -156,8 +156,8 @@ button:active{transform:translate(.2cqw,.2cqw)}
     <div id="art"></div>
     <svg class="bgs" viewBox="0 0 683 384" preserveAspectRatio="none" aria-hidden="true"><polygon points="0,0 274,0 226,384 0,384" fill="#2a0e0e" opacity=".35"/><defs><clipPath id="pc"><polygon points="0,0 260,0 212,384 0,384"/></clipPath></defs><polygon points="0,0 260,0 212,384 0,384" fill="#a8241a"/><g clip-path="url(#pc)"><rect x="0" y="342" width="300" height="42" fill="#7e1a12"/><polyline points="-10,354 0,370 10,354 20,370 30,354 40,370 50,354 60,370 70,354 80,370 90,354 100,370 110,354 120,370 130,354 140,370 150,354 160,370 170,354 180,370 190,354 200,370 210,354 220,370 230,354 240,370 250,354 260,370 270,354 280,370" fill="none" stroke="#0d0d0d" stroke-width="3" stroke-linejoin="round"/><line x1="0" y1="342" x2="300" y2="342" stroke="#0d0d0d" stroke-width="3.5"/></g><line x1="260" y1="0" x2="212" y2="384" stroke="#0d0d0d" stroke-width="6" vector-effect="non-scaling-stroke"/></svg>
     <div id="left"><h1 id="tt" class="ol">A Date with Maya</h1>
-    <div id="menu"><button data-a="cont" class="ol" id="bcont" style="display:none">Continue</button><button data-a="new" class="ol">New Game</button><button data-a="load" class="ol">Load Game</button><button data-a="gal" class="ol">Gallery</button></div></div>
-    <div class="ed"><button data-a="set">Settings</button><button data-a="edit">Script editor</button></div>
+    <div id="menu"><button data-a="cont" class="ol" id="bcont" style="display:none">Continue</button><button data-a="new" class="ol">New Game</button><button data-a="load" class="ol">Load Game</button><button data-a="gal" class="ol">Gallery</button><button data-a="set" class="ol">Settings</button></div></div>
+    <div class="ed"><button data-a="edit">Script editor</button></div>
   </div>
   <div id="fade"></div><div id="viewer"></div><div id="toast"></div>
   <div id="panel"><div id="card"><h2 id="ph"></h2><div id="pbody"></div><div id="pfoot"></div></div></div>
@@ -171,7 +171,7 @@ const RM=matchMedia("(prefers-reduced-motion:reduce)").matches;
 const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 
 /* ---------- Demo story, written in the engine’s script language ---------- */
-const DEMO=`# A Date with Maya — placeholder script (story in progress)
+const DEMO=`# A Date with Maya — Chapter 1
 title A Date with Maya
 char maya "Maya" #a8241a
 
@@ -181,9 +181,12 @@ char maya "Maya" #a8241a
 # Write {player} anywhere in the story, in choices, or even in a character's display name.
 # (The "ask" command still exists for prompts in the middle of a story:
 #    ask varname "Question shown to the player" "Default")
-char you "{player}" #3d5a80
-bg room images/room.jpg
-bg hall images/hall.jpg
+char mc "{player}" #3d5a80
+
+# --- BACKGROUNDS ---
+# black is a plain colour. classroom expects images/classroom.jpg (upload it next to this file on GitHub Pages).
+bg black #000
+bg classroom images/classroom.jpg
 
 # --- IMAGES ---
 # Sprite files live in the images folder next to this file (names are case-sensitive on GitHub Pages).
@@ -193,29 +196,81 @@ sprite maya menu images/maya_mm.png
 
 # --- CGS: full-screen event art. Define with: cg name file "Gallery title"
 # Show with "cg name", return to the normal scene with "cg off". Seen CGs unlock in the Gallery.
-cg dusk images/cg_room.jpg "Dusk in Maya’s room"
-cg hallway images/cg_hall.jpg "A look down the hall"
+# cg dusk images/cg_room.jpg "Dusk in Maya’s room"
+# cg hallway images/cg_hall.jpg "A look down the hall"
 # More expressions: sprite maya sad images/maya_sad.png   (or a template: sprites maya images/maya_{expr}.png)
 
 label start
-scene room
-show maya center happy
-maya: Hey, {player}! You made it.
-you: Of course. I wouldn’t miss it.
+scene black
+"."
+".."
+"…"
+"It's been 2 weeks since we started dating."
+"We haven't hung out in public since."
+"Well I can understand why. She's shy."
+"And that's what I like most about her."
+"She's cute when she's shy. She's funny, which no one would even know since she doesn't talk to anyone."
+"Anyways, back on track. We've only hung out at school, and at my house."
+"And this time, I'm going to convince her."
+
+scene classroom
 show maya center neutral
-maya: Two weeks already… it feels like longer, honestly.
-"You and Maya have been dating for two weeks."
-"The name tab above reads “{player}” because of the name you chose when you started a New Game."
-"The story isn’t finished yet. This is a placeholder scene."
-"Here’s what a CG scene looks like."
-cg dusk
-maya: A full-screen illustration takes over the whole scene…
-"…and it unlocks in the Gallery on the main menu."
-cg hallway
-maya: You can switch from one CG to another, too.
-cg off
-maya: And then we’re back to normal.
-"Open the script editor on the title screen to start writing the story."
+"And now, Maya dozing off into another story she's telling me."
+
+maya: …So then Mymy, being the self centered Japanese bastard she is, decides to-
+maya: ...Wait. What was I saying?
+mc: You were talking about Mymy.
+maya: Oh. Right.
+"She looks down at her phone, trying to remember where she left off."
+maya: …Whatever. She's stupid anyway.
+mc: You really don't like her, huh?
+maya: I don't dislike her.
+mc: You literally just called her an idiot.
+maya: That's different.
+
+show maya center happy
+"She lets out a small laugh."
+mc: Hey, Maya?
+maya: Hm?
+mc: Do you wanna do something after school tomorrow?
+maya: ...Like what?
+mc: I dunno. Maybe go somewhere?
+maya: Somewhere?
+mc: Yeah. Like, outside.
+"She looks at me for a moment."
+
+show maya center neutral
+maya: …Outside?
+mc: Yeah, you know. The place with the sky and stuff.
+maya: …
+maya: You're stupid.
+mc: I'm serious!
+
+show maya center happy
+"She giggles, slightly, covering her mouth."
+maya: I know, I know...
+"Her expression changes."
+
+show maya center neutral
+maya: ...Where would we go?
+mc: There's a park not far away from my house, we can go there.
+
+show maya center happy
+maya: So we're going to your house?
+"Sometimes I wonder about this girl."
+mc: No, go to the park that's near my house.
+
+show maya center neutral
+maya: Oh.
+maya: Atleast.. we'll be together?
+mc: Yeah! Plus, all of it will be so beautiful seeing all the scenery there!
+"Not as beautiful as her, God, I can stare at her for centuries."
+
+show maya center happy
+maya: …Fine, we'll go. Tomorrow.
+mc: Alright, can't wait.
+
+# Credits: thank you ZOV legends at mayapaint.ink, and always luv maya as she will always love you back :>)
 end
 `;
 
