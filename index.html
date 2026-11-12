@@ -194,6 +194,16 @@ sprite maya neutral images/maya.png
 sprite maya happy images/maya_happy.png
 sprite maya menu images/maya_mm.png
 
+# --- TALKING SPRITES ---
+# Name an expression with _talk on the end and that image is used while the character is speaking.
+# When the MC talks, the narration is on screen, or there is a pause, she goes back to the normal sprite.
+# If a _talk image is missing, the normal one is used instead.
+sprite maya neutral_talk images/maya_talk.png
+sprite maya happy_talk images/maya_happy_talk.png
+
+# --- PAUSES ---
+# "wait 1.5" hides the text box and pauses the story for 1.5 seconds (no click needed). Plain "wait" = 1 second.
+
 # --- CGS: full-screen event art. Define with: cg name file "Gallery title"
 # Show with "cg name", return to the normal scene with "cg off". Seen CGs unlock in the Gallery.
 # cg dusk images/cg_room.jpg "Dusk in Maya’s room"
@@ -202,6 +212,7 @@ sprite maya menu images/maya_mm.png
 
 label start
 scene black
+wait 1
 "."
 ".."
 "…"
@@ -214,6 +225,7 @@ scene black
 "And this time, I'm going to convince her."
 
 scene classroom
+wait 1.5
 show maya center neutral
 "And now, Maya dozing off into another story she's telling me."
 
@@ -233,6 +245,7 @@ show maya center happy
 mc: Hey, Maya?
 maya: Hm?
 mc: Do you wanna do something after school tomorrow?
+show maya center neutral
 maya: ...Like what?
 mc: I dunno. Maybe go somewhere?
 maya: Somewhere?
@@ -262,6 +275,7 @@ mc: No, go to the park that's near my house.
 
 show maya center neutral
 maya: Oh.
+show maya center happy
 maya: Atleast.. we'll be together?
 mc: Yeah! Plus, all of it will be so beautiful seeing all the scenery there!
 "Not as beautiful as her, God, I can stare at her for centuries."
@@ -305,6 +319,7 @@ function compile(src){
     if(m=l.match(/^jump\s+(\w+)$/)){P.push({t:"jump",l:m[1]});return}
     if(m=l.match(/^music\s+(\w+)/)){P.push({t:"music",m:m[1]});return}
     if(m=l.match(/^ask\s+(\w+)\s+"(.+?)"(?:\s+"(.*)")?$/)){P.push({t:"ask",v:m[1],q:m[2],d:m[3]||""});return}
+    if(m=l.match(/^wait(?:\s+(\d+(?:\.\d+)?))?$/)){P.push({t:"wait",s:+m[1]||1});return}
     if(l=="shake"||l=="flash"){P.push({t:l});return}
     if(l=="end"){P.push({t:"end"});return}
     if((m=l.match(/^(\w+):\s+(.+)/))&&CH[m[1]]){P.push({t:"say",w:m[1],x:m[2]});return}
@@ -331,19 +346,36 @@ const interp=t=>t.replace(/\{(\w+)\}/g,(_,k)=>S.v[k]??0);
 const lum=h=>{const[r,g,b]=h.slice(1).match(/../g).map(x=>parseInt(x,16)/255);return .2126*r+.7152*g+.0722*b};
 const resolve=p=>ASSETS[p.split(/[\\/]/).pop()]||p;
 const bgCss=v=>/^[^\s(]+\.(png|jpe?g|webp|gif|avif|svg)$/i.test(v)?`url("${resolve(v)}") center/cover no-repeat,#4a1f20`:v.replace(/url\(["']?([^"')]+)["']?\)/,(_,p)=>`url("${resolve(p)}") center/cover no-repeat`);
-function fillSprite(box,id,e){
-  const c=SPR[id]||{map:{}},t=x=>c.tpl&&c.tpl.replace("{expr}",x);
-  const L=[c.map[e],t(e),t("neutral"),c.map.neutral,c.map.default].filter(Boolean),vec=()=>{box.innerHTML="";const m=document.createElement("div");m.className="miss";m.append("Sprite missing");const sm=document.createElement("small");sm.textContent=(CH[id]?CH[id].n:id)+" · "+e;m.append(sm);box.appendChild(m)};
+/* talk=true looks for the "<expression>_talk" sprite first (e.g. happy_talk) and falls back to the normal one.
+   The image is swapped in place once it has loaded, so switching between talking and idle never flickers. */
+function fillSprite(box,id,e,talk){
+  const c=SPR[id]||{map:{}},t=x=>c.tpl&&c.tpl.replace("{expr}",x),k=talk?e+"_talk":"";
+  const L=[k&&c.map[k],k&&t(k),c.map[e],t(e),t("neutral"),c.map.neutral,c.map.default].filter(Boolean),vec=()=>{box.innerHTML="";const m=document.createElement("div");m.className="miss";m.append("Sprite missing");const sm=document.createElement("small");sm.textContent=(CH[id]?CH[id].n:id)+" · "+e;m.append(sm);box.appendChild(m)};
   if(!L.length)return vec();
-  let i=0;const im=new Image();im.alt=CH[id]?CH[id].n:id;im.draggable=false;
-  im.onerror=()=>{++i<L.length?im.src=resolve(L[i]):vec()};
-  im.src=resolve(L[0]);box.innerHTML="";box.appendChild(im);
+  const tk=box._tk=(box._tk||0)+1,old=box.querySelector("img");
+  let i=0;const im=new Image();
+  im.onload=()=>{if(box._tk!==tk)return;if(old&&old.isConnected){old.src=im.src}else{im.alt=CH[id]?CH[id].n:id;im.draggable=false;box.replaceChildren(im)}};
+  im.onerror=()=>{if(box._tk!==tk)return;if(++i<L.length)im.src=resolve(L[i]);else if(!old)vec()};
+  im.src=resolve(L[0]);
 }
 const idb=()=>new Promise((ok,no)=>{const r=indexedDB.open("maya_assets",1);r.onupgradeneeded=()=>r.result.createObjectStore("f");r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});
 async function saveAsset(f){ASSETS[f.name]=URL.createObjectURL(f);try{(await idb()).transaction("f","readwrite").objectStore("f").put(f,f.name)}catch(e){}}
 async function loadAssets(){try{const d=await idb();await new Promise(ok=>{const q=d.transaction("f").objectStore("f").openCursor();q.onsuccess=()=>{const c=q.result;if(c){ASSETS[c.key]=URL.createObjectURL(c.value);c.continue()}else ok()};q.onerror=()=>ok()})}catch(e){}}
 async function clearAssets(){Object.values(ASSETS).forEach(u=>URL.revokeObjectURL(u));ASSETS={};try{(await idb()).transaction("f","readwrite").objectStore("f").clear()}catch(e){}}
 function listAssets(){const a=$("#al"),k=Object.keys(ASSETS);if(a)a.textContent=k.length?k.length+" image(s): "+k.join(", "):"No images added"}
+
+/* ---------- Preloading: every image the script uses is fetched and decoded up front (while you are on the title screen),
+   so nothing pops in late. New Game / Load wait for it (max 6s) behind the black fade. ---------- */
+let assetsReady=false,READY=Promise.resolve();const PRE=[];
+function imageList(){const s=new Set(["images/room.jpg"]);
+  Object.values(BG).forEach(v=>{const m=v.match(/[^\s("']+\.(?:png|jpe?g|webp|gif|avif|svg)/i);if(m)s.add(m[0])});
+  Object.values(CGS).forEach(c=>s.add(c.src));
+  Object.values(SPR).forEach(c=>Object.values(c.map).forEach(x=>s.add(x)));
+  P.forEach(p=>{if(p.t=="show"){const c=SPR[p.id];if(c&&c.tpl){s.add(c.tpl.replace("{expr}",p.e));s.add(c.tpl.replace("{expr}",p.e+"_talk"))}}});
+  return[...s]}
+function preload(){PRE.length=0;
+  READY=Promise.all(imageList().map(p=>new Promise(ok=>{const im=new Image();PRE.push(im);
+    im.onload=()=>{(im.decode?im.decode():Promise.resolve()).catch(()=>{}).then(ok)};im.onerror=()=>ok();im.src=resolve(p)})))}
 
 /* ---------- Audio: tiny generative pads ---------- */
 const Aud={ctx:null,timer:null,mode:"off",vol:store.get("maya_vol",.5),
@@ -358,9 +390,11 @@ const Aud={ctx:null,timer:null,mode:"off",vol:store.get("maya_vol",.5),
 
 Aud.sfx=function(f,d=.04,g=.05){const v=store.get("maya_sfx",.4);if(!v)return;try{this.ctx=this.ctx||new (window.AudioContext||window.webkitAudioContext)();const c=this.ctx;if(c.state=="suspended")c.resume();const o=c.createOscillator(),a=c.createGain(),t=c.currentTime;o.type="triangle";o.frequency.value=f*(1+Math.random()*.08);a.gain.setValueAtTime(g*v,t);a.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(a).connect(c.destination);o.start(t);o.stop(t+d)}catch(e){}};
 /* ---------- Engine ---------- */
-let lastWho="",hist=[],cur=null,typing=null,auto=false,skip=false,autoT=null,flip=0,busy=false;
+let lastWho="",hist=[],cur=null,typing=null,auto=false,skip=false,autoT=null,flip=0,busy=false,waitT=null,waiting=false,SPK=null;
 const clone=o=>JSON.parse(JSON.stringify(o));
 const newState=()=>({pc:0,v:{},bg:null,cg:null,sp:{},mu:"off",log:[]});
+/* Only the character who is speaking uses their "_talk" sprite; the MC, narration, choices and pauses put everyone back to idle. */
+function setTalk(id){SPK=id||null;document.querySelectorAll("#sprites .sp").forEach(d=>{const on=!!SPK&&d.dataset.id==SPK;if(on!==(d.dataset.t=="1")){d.dataset.t=on?"1":"";fillSprite(d,d.dataset.id,d.dataset.e,on)}})}
 
 function renderScene(instant){
   const back=flip?$("#b2"):$("#b1"),front=flip?$("#b1"):$("#b2");
@@ -368,7 +402,7 @@ function renderScene(instant){
   if(back.dataset.k!=S.bg||instant){front.style.background=css;front.dataset.k=S.bg;front.style.opacity=1;back.style.opacity=0;flip^=1}
   const box=$("#sprites"),old={};[...box.children].forEach(d=>old[d.dataset.id]=d);
   Object.entries(S.sp).forEach(([id,s])=>{let d=old[id];delete old[id];
-    if(!d||d.dataset.e!=s.e){const had=!!d;if(d)d.remove();d=document.createElement("div");d.className="sp"+(had?" swap":"");d.dataset.id=id;d.dataset.e=s.e;fillSprite(d,id,s.e);box.appendChild(d)}
+    if(!d||d.dataset.e!=s.e){const had=!!d;if(d)d.remove();d=document.createElement("div");d.className="sp"+(had?" swap":"");d.dataset.id=id;d.dataset.e=s.e;d.dataset.t=id===SPK?"1":"";fillSprite(d,id,s.e,id===SPK);box.appendChild(d)}
     d.dataset.p=s.p;d.style.left={left:"20%",center:"50%",right:"80%"}[s.p]||"50%"});
   Object.values(old).forEach(d=>d.remove());showCG(S.cg);
 }
@@ -390,6 +424,8 @@ function run(){
       case"music":S.mu=p.m;Aud.start(p.m);S.pc++;break;
       case"shake":{const s=$("#stage");s.classList.remove("shake");void s.offsetWidth;s.classList.add("shake");S.pc++;break}
       case"flash":{const f=$("#fx");f.classList.remove("go");void f.offsetWidth;f.classList.add("go");S.pc++;break}
+      case"wait":{setTalk(null);$("#box").style.display="none";busy=true;waiting=true;clearTimeout(waitT);
+        waitT=setTimeout(()=>{waiting=false;S.pc++;run()},skip?0:p.s*1000);return}
       case"say":snap();return say(p);
       case"choice":snap();return choose(p);
       case"ask":snap();return askName(p);
@@ -399,7 +435,7 @@ function run(){
 }
 function say(p){
   const txt=interp(p.x),who=p.w?interp(CH[p.w].n):"";
-  $("#box").style.display="block";$("#name").style.display=who?"block":"none";$("#name").textContent=who;{const c=p.w?CH[p.w].c:"";$("#name").style.background=c;$("#name").style.color=c&&lum(c)>.55?"#0d0d0d":""}document.querySelectorAll("#sprites .sp").forEach(d=>d.classList.toggle("dim",!!p.w&&d.dataset.id!=p.w));
+  $("#box").style.display="block";$("#name").style.display=who?"block":"none";$("#name").textContent=who;{const c=p.w?CH[p.w].c:"";$("#name").style.background=c;$("#name").style.color=c&&lum(c)>.55?"#0d0d0d":""}document.querySelectorAll("#sprites .sp").forEach(d=>d.classList.toggle("dim",!!p.w&&d.dataset.id!=p.w));setTalk(p.w);
   if(who!==lastWho){lastWho=who;const n=$("#name");n.classList.remove("pop");void n.offsetWidth;n.classList.add("pop")}
   if(p.w&&!skip&&!RM){const sp=document.querySelector('#sprites .sp[data-id="'+p.w+'"]');if(sp)sp.animate([{marginBottom:"0"},{marginBottom:"1.2cqw"},{marginBottom:"0"}],{duration:280,easing:"ease-out"})}
   $("#next").style.visibility="hidden";
@@ -415,7 +451,7 @@ function say(p){
   typing=setTimeout(tick,base);
 }
 function choose(p){
-  skip=false;sync();clearTimeout(autoT);
+  skip=false;sync();clearTimeout(autoT);setTalk(null);
   $("#box").style.display="none";busy=true;
   const box=$("#choices");box.innerHTML="";let k=0;
   p.o.forEach(o=>{if(o.c&&!ev(o.c))return;k++;const b=document.createElement("button");b.innerHTML="<i>"+k+"</i>";b.append(document.createTextNode(interp(o.x)));
@@ -428,20 +464,23 @@ function advance(){
   clearTimeout(autoT);S.pc++;run();
 }
 function rollback(){
-  if(hist.length<2)return;hist.pop();S=hist.pop();renderScene(true);Aud.start(S.mu);run();
+  if(waiting?hist.length<1:hist.length<2)return;
+  clearTimeout(waitT);
+  if(waiting){waiting=false;S=hist.pop()}else{hist.pop();S=hist.pop()}
+  renderScene(true);Aud.start(S.mu);run();
 }
 function endGame(){
-  auto=skip=false;sync();clearTimeout(autoT);busy=true;
+  auto=skip=false;sync();clearTimeout(autoT);busy=true;setTalk(null);
   $("#box").style.display="none";$("#choices").innerHTML="";
   const b=document.createElement("button");b.textContent="The end — back to title";b.onclick=e=>{e.stopPropagation();toTitle()};$("#choices").appendChild(b);
 }
 function sync(){$("#bauto").classList.toggle("on",auto);$("#bskip").classList.toggle("on",skip)}
-function startGame(st){asking=false;
+function startGame(st){asking=false;clearTimeout(waitT);waiting=false;SPK=null;
   $("#title").style.display="none";$("#hud").style.display="flex";
   S=st||newState();hist=[];renderScene(true);Aud.start(S.mu);run();
 }
 function toTitle(){
-  auto=skip=false;sync();clearTimeout(autoT);clearInterval(typing);Aud.start("off");
+  auto=skip=false;sync();clearTimeout(autoT);clearInterval(typing);clearTimeout(waitT);waiting=false;SPK=null;Aud.start("off");
   $("#title").style.display="block";$("#hud").style.display="none";$("#box").style.display="none";$("#choices").innerHTML="";$("#sprites").innerHTML="";
   $("#tt").innerHTML=META.title.split(" ").map((w,i)=>`<span style="--i:${i}">${esc(w)}</span>`).join(" ");fillSprite($("#art"),CH.maya?"maya":Object.keys(CH)[0],"menu");document.title=META.title;$("#cg").style.opacity=0;$("#cg").dataset.n="";$("#stage").classList.remove("hideui");$("#bcont").style.display=Object.keys(store.get("maya_saves",{})).length?"":"none";
   $("#b1").style.opacity=0;$("#b2").style.opacity=0;$("#b1").dataset.k="";$("#b2").dataset.k="";
@@ -470,17 +509,19 @@ function namePrompt(v,q,d,cb,cancel){
 function confirmName(){const k=ASK;if(!k)return;
   const v=$("#nm").value.replace(/\s+/g," ").trim().slice(0,16)||k.d||"Player";
   store.set("maya_nm_"+k.v,v);asking=false;ASK=null;closePanel();k.cb(v)}
-function askName(p){skip=auto=false;sync();clearTimeout(autoT);busy=true;$("#box").style.display="none";
+function askName(p){skip=auto=false;sync();clearTimeout(autoT);busy=true;setTalk(null);$("#box").style.display="none";
   namePrompt(p.v,interp(p.q),p.d,v=>{S.v[p.v]=v;S.pc++;run()},false)}
 /* New Game: ask the player's name first, then start. Maya already knows you (2 weeks of dating), so she never asks in the story. */
 function newGame(){
   namePrompt("player","What should Maya call you?","Alex",v=>{
-    fade(()=>{const st=newState();st.v.player=v;startGame(st)})
+    fadeWait(()=>{const st=newState();st.v.player=v;startGame(st)})
   },true)}
 
 function panel(title,html,wide){$("#card").classList.toggle("wide",!!wide);$("#pfoot").innerHTML='<button data-a="close">Close</button>';$("#ph").textContent=title;$("#pbody").innerHTML=html;$("#pbody").scrollTop=0;$("#panel").classList.add("open")}
 function toast(t){const e=$("#toast");e.textContent=t;e.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("on"),1600)}
 function fade(fn){const f=$("#fade");f.classList.add("on");setTimeout(()=>{fn();requestAnimationFrame(()=>f.classList.remove("on"))},320)}
+function fadeWait(fn){const f=$("#fade");f.classList.add("on");
+  Promise.all([new Promise(r=>setTimeout(r,320)),Promise.race([READY,new Promise(r=>setTimeout(r,6000))])]).then(()=>{fn();requestAnimationFrame(()=>f.classList.remove("on"))})}
 function pause(){panel("Paused",`<div class="pm">${[["Save","save"],["Load","load"],["Settings","set"],["Backlog","log"],["Gallery","gal"],["Hide UI","hide"],["Fullscreen","fs"],["Title screen","quit"]].map(([t,a])=>`<button data-a="${a}">${t}</button>`).join("")}</div>`)}
 function closePanel(){$("#panel").classList.remove("open");if(ASK&&ASK.cancel){ASK=null;asking=false}}
 const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -500,7 +541,7 @@ function settings(){
 function editor(){panel("Script editor",`<textarea id="src" spellcheck="false"></textarea>`,true);$("#src").value=store.get("maya_script",DEMO);
   $("#pfoot").insertAdjacentHTML("afterbegin",`<button id="runb" data-a="run">Run script</button> <button id="rstb" data-a="reset">Reset to demo</button> <button data-a="img">Add images</button> <button data-a="clr">Clear images</button> <span id="al"></span> <span id="err"></span>`);listAssets()}
 function loadScript(src,save){
-  try{compile(src);if(save)store.set("maya_script",src);{const er=$("#err");if(er)er.textContent=""}toTitle();return true}
+  try{compile(src);if(save)store.set("maya_script",src);if(assetsReady)preload();{const er=$("#err");if(er)er.textContent=""}toTitle();return true}
   catch(e){const el=$("#err");if(el)el.textContent=e.message;return false}
 }
 
@@ -514,12 +555,12 @@ document.addEventListener("click",e=>{
   if(sl){const i=sl.dataset.slot,sv=store.get("maya_saves",{});
     if(sl.dataset.mode=="save"){const st=hist[hist.length-1];if(!st)return;
       sv[i]={st,when:new Date().toLocaleString(),line:(S.log.length?S.log[S.log.length-1].x:"").slice(0,48)};store.set("maya_saves",sv);slots("save");toast("Saved to slot "+i)}
-    else if(sv[i]){closePanel();clearInterval(typing);fade(()=>startGame(clone(sv[i].st)))}
+    else if(sv[i]){closePanel();clearInterval(typing);fadeWait(()=>startGame(clone(sv[i].st)))}
     return}
   if(a){e.stopPropagation();const k=a.dataset.a;
     ({back:rollback,log:showLog,auto(){auto=!auto;skip=false;sync();if(auto&&!typing)advance()},skip(){skip=!skip;auto=false;sync();if(skip&&!typing)advance()},
      save(){slots("save")},load(){slots("load")},set:settings,quit(){closePanel();fade(toTitle)},nameok:confirmName,gal:gallery,menu:pause,hide(){closePanel();$("#stage").classList.add("hideui")},fs(){closePanel();const e=$("#stage");document.fullscreenElement?document.exitFullscreen():e.requestFullscreen&&e.requestFullscreen()},close:closePanel,
-     new(){newGame()},cont(){const sv=store.get("maya_saves",{}),l=Object.values(sv).sort((x,y)=>new Date(y.when)-new Date(x.when))[0];if(l)fade(()=>startGame(clone(l.st)));else slots("load")},
+     new(){newGame()},cont(){const sv=store.get("maya_saves",{}),l=Object.values(sv).sort((x,y)=>new Date(y.when)-new Date(x.when))[0];if(l)fadeWait(()=>startGame(clone(l.st)));else slots("load")},
      edit:editor,img(){$("#fi").click()},clr(){clearAssets().then(()=>{listAssets();toTitle()})},run(){if(loadScript($("#src").value,true))closePanel()},reset(){$("#src").value=DEMO;if(loadScript(DEMO,true))closePanel()}})[k]();
     return}
   if(e.target.closest("#box")||e.target.id=="stage"||e.target.closest("#sprites")||e.target.classList.contains("bg")){
@@ -543,9 +584,9 @@ $("#title").addEventListener("pointermove",e=>{const r=$("#stage").getBoundingCl
 $("#stage").addEventListener("contextmenu",e=>{if($("#title").style.display!="none")return;e.preventDefault();$("#stage").classList.toggle("hideui")});
 document.addEventListener("wheel",e=>{if(e.deltaY<0&&$("#title").style.display=="none"&&!$("#panel").classList.contains("open"))rollback()},{passive:true});
 
-$("#fi").addEventListener("change",async e=>{for(const f of e.target.files)await saveAsset(f);e.target.value="";listAssets();if($("#title").style.display!="none")toTitle()});
+$("#fi").addEventListener("change",async e=>{for(const f of e.target.files)await saveAsset(f);e.target.value="";listAssets();preload();if($("#title").style.display!="none")toTitle()});
 if(!loadScript(store.get("maya_script",DEMO),false))loadScript(DEMO,false);
-loadAssets().then(()=>{if($("#title").style.display!="none")toTitle()});
+loadAssets().then(()=>{assetsReady=true;preload();if($("#title").style.display!="none")toTitle()});
 </script>
 </body>
 </html>
