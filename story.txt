@@ -47,9 +47,9 @@ sprite maya cryfrownlookdown images/maya_cryfrownlookdown.png
 sprite maya cryopenlookingdown images/maya_cryopenlookingdown.png
 
 # --- SOEI ---
-# Soei is text-box only for now. When she has a sprite, add the line below and
-# remove the "#" from the "show soei" line at the door scene.
-# sprite soei neutral images/soei.png
+# soei.png is her idle sprite, soei_talk.png is used while she is speaking.
+sprite soei neutral images/soei.png
+sprite soei neutral_talk images/soei_talk.png
 
 # --- CGS ---
 cg crycg images/maya_crycg.png "Maya in tears"
@@ -154,7 +154,7 @@ scene mcbedroom
 "*Ringing*"
 "*Pick Up*"
 
-# Soei has no sprite yet, so she is only a text box here.
+# Soei is only a text box on the phone. She gets a sprite when she opens the door.
 soei: Hello?
 mc: Hi, can I come over and check up on Maya? She didn't come to school today, and I was a bit worried since we were gonna do something today.
 soei: … Oh! Maya's boyfriend! {player}, of course you can come over and check up on her, she's in her room right now since she threw up this morning.
@@ -171,8 +171,8 @@ wait 1
 scene housefrontdoor
 "*Knocks*"
 "*Soei answers the door*"
-# Soei makes her first appearance here. Uncomment once she has a sprite:
-# show soei center neutral
+# Soei makes her first appearance here.
+show soei center neutral
 soei: Hey {player}! She's in her room right now, as I said before, but.. yeah.
 mc: Alright, thank you.
 
