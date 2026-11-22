@@ -12,8 +12,9 @@
 #   hide maya            remove a sprite
 #   wait 1.5             hide the text box and pause 1.5 seconds (plain "wait" = 1)
 #   cg name / cg off     show / leave full-screen event art (unlocks in the Gallery)
+#   menumusic name       the song for the title screen (defined with "track")
 #   music name           play a song defined with "track" (or the built-in pads: calm, tense; "music off" stops)
-#   credits ... end credits   a scrolling credits roll (see the bottom of this file)
+#   credits ... end credits   a timed credits roll, one line at a time (see the bottom of this file)
 #   end                  finish the story
 #   {player}             the name typed on New Game
 #
@@ -60,6 +61,11 @@ cg crycg images/maya_crycg.png "Maya in tears"
 # track name "audio file" "Song title" "Artist" "cover image"
 # While a track plays, a little card with the cover, title and artist shows in the bottom left.
 track ikbenhetmaar "music/Ik ben het maar.mp3" "Ik ben het maar" "Studio Massa" "images/Ik ben het maar.jpeg"
+
+# Main menu song: plays on the title screen (and whenever you come back to it) and loops.
+# It has no title/artist, so no now-playing card shows. Add "Song title" "Artist" after the file to show one.
+track menu "music/Naar Huis (Going Home).mp3"
+menumusic menu
 
 # ============================================================
 #  CHAPTER 1
@@ -248,7 +254,7 @@ literally this wouldnt exist including mayawin of it wasnt for Massa
 
 thank you for playing this gemmy vn, zov legends. till we meet again!
 
-~ maybe a mymy one?
+~ maybe a maya one?
 
 ~ fuck no lol
 end credits
