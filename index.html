@@ -127,6 +127,7 @@ input[type=range]{accent-color:var(--hoodie)}
 #viewer span{position:absolute;bottom:1.5cqw;left:0;right:0;text-align:center;font:600 1.7cqw var(--ui);color:#fff;text-shadow:0 0 .8cqw #000}
 #nm{width:100%;font:600 3.2cqw var(--ui);padding:1cqw 1.4cqw;background:#fff4e8;color:#2a1414;border:.35cqw solid var(--ink);border-radius:1cqw;box-shadow:.4cqw .4cqw 0 var(--shadow)}
 .hint{font-size:1.8cqw;opacity:.7;margin-top:1.2cqw!important}
+#nmerr{color:#b3261e;font:600 2cqw var(--ui);min-height:1.3em;margin:.8cqw 0 0!important}
 #tt span{display:inline-block;animation:wordin .6s cubic-bezier(.2,1.5,.4,1) backwards;animation-delay:calc(.2s + var(--i)*.13s)}
 #name.pop{animation:pop .3s cubic-bezier(.2,1.8,.4,1)}
 #choices button{animation:cardin .4s cubic-bezier(.2,.9,.3,1) backwards;animation-delay:calc(var(--k)*.07s)}
@@ -197,7 +198,7 @@ const STORY_URL="story.txt";
 /* ---------- Compiler ---------- */
 let P=[],LAB={},CH={},BG={},META={title:"A Date with Maya",subtitle:""},SPR={},CGS={},TRACKS={};
 function compile(src){
-  P=[];LAB={};CH={};BG={};SPR={};CGS={};TRACKS={};META={title:"Visual Novel",subtitle:"",menu:""};
+  P=[];LAB={};CH={};BG={};SPR={};CGS={};TRACKS={};META={title:"Visual Novel",subtitle:"",menu:"",reserved:[]};
   let ch=null,cr=null,crs=74,m;
   src.split(/\r?\n/).forEach((raw,i)=>{
     const l=raw.trim();
@@ -213,6 +214,7 @@ function compile(src){
     if(m=l.match(/^credits(?:\s+(\d+))?$/)){cr=[];crs=+m[1]||74;return}
     if(m=l.match(/^title\s+(.+)/)){META.title=m[1];return}
     if(m=l.match(/^menumusic\s+(\w+)/)){META.menu=m[1];return}
+    if(m=l.match(/^reservednames\s+(.+)/)){META.reserved=m[1].split(",").map(x=>normName(x).replace(/[^a-z]/g,"")).filter(Boolean);return}
     if(m=l.match(/^subtitle\s+(.+)/)){META.subtitle=m[1];return}
     if(m=l.match(/^char\s+(\w+)\s+"(.+?)"\s+(#\w+)/)){CH[m[1]]={n:m[2],c:m[3]};return}
     if(m=l.match(/^bg\s+(\w+)\s+(.+)/)){BG[m[1]]=m[2];return}
@@ -251,6 +253,10 @@ const val=t=>{t=t.trim();if(/^-?\d+(\.\d+)?$/.test(t))return+t;if(t=="true")retu
 const cmp=s=>{const m=s.match(/^(.+?)\s*(==|!=|>=|<=|>|<)\s*(.+)$/);if(!m)return s.trim()[0]=="!"?!val(s.trim().slice(1)):!!val(s);
   const a=val(m[1]),b=val(m[3]);return{"==":a==b,"!=":a!=b,">=":a>=b,"<=":a<=b,">":a>b,"<":a<b}[m[2]]};
 const ev=e=>e.split(/\s+or\s+/).some(o=>o.split(/\s+and\s+/).every(cmp));
+const normName=x=>x.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+function nameBlocked(v){const R=META.reserved||[];if(!R.length)return false;
+  const n=normName(v),whole=n.replace(/[^a-z]/g,""),words=n.split(/[^a-z]+/).filter(Boolean);
+  return R.some(r=>whole===r||words.includes(r))}
 const interp=t=>t.replace(/\{(\w+)\}/g,(_,k)=>S.v[k]??0);
 
 /* ---------- Sprites (generated SVG so the engine needs no assets) ---------- */
@@ -494,12 +500,13 @@ function openViewer(n){const v=$("#viewer");v.style.backgroundImage=`url("${reso
 let asking=false,ASK=null;
 function namePrompt(v,q,d,cb,cancel){
   ASK={v,d,cb,cancel:!!cancel};asking=true;
-  panel(q,`<input id="nm" maxlength="16" autocomplete="off" spellcheck="false" placeholder="${esc(d||"Your name")}"><p class="hint">Up to 16 characters. Press Enter to confirm.</p>`);
+  panel(q,`<input id="nm" maxlength="16" autocomplete="off" spellcheck="false" placeholder="${esc(d||"Your name")}"><p class="hint">Up to 16 characters. Press Enter to confirm.</p><p id="nmerr"></p>`);
   $("#pfoot").innerHTML='<button data-a="nameok">Confirm</button>'+(cancel?'<button data-a="close">Back</button>':'');
-  const i=$("#nm");i.value=store.get("maya_nm_"+v,d||"");i.focus();i.select();
+  const i=$("#nm");i.value=store.get("maya_nm_"+v,d||"");i.focus();i.select();i.oninput=()=>{$("#nmerr").textContent=""};
   i.onkeydown=e=>{if(e.key=="Enter"){e.preventDefault();confirmName()}else if(e.key=="Escape"&&ASK&&ASK.cancel){e.preventDefault();closePanel()}}}
 function confirmName(){const k=ASK;if(!k)return;
   const v=$("#nm").value.replace(/\s+/g," ").trim().slice(0,16)||k.d||"Player";
+  if(nameBlocked(v)){$("#nmerr").textContent="That name belongs to a character in the story. Please pick a different one.";const i=$("#nm");i.focus();i.select();return}
   store.set("maya_nm_"+k.v,v);asking=false;ASK=null;closePanel();k.cb(v)}
 function askName(p){skip=auto=false;sync();clearTimeout(autoT);busy=true;setTalk(null);$("#box").style.display="none";
   namePrompt(p.v,interp(p.q),p.d,v=>{S.v[p.v]=v;S.pc++;run()},false)}
