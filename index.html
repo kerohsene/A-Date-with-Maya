@@ -138,11 +138,10 @@ button:active{transform:translate(.2cqw,.2cqw)}
 #credits.on{display:block;animation:fadein .9s}
 .cbg{position:absolute;inset:-5%;background:center/cover no-repeat;filter:blur(1.5cqw) brightness(.36) saturate(.85);opacity:0;transition:opacity 1.8s ease-in-out;animation:kb 28s ease-in-out infinite alternate}
 .cbg.on{opacity:1}
-#cr{position:absolute;left:10%;right:10%;top:0;text-align:center;color:var(--paper);font:400 2.7cqw/1.35 var(--hand);text-shadow:.2cqw .2cqw 0 #000b,0 0 1.4cqw #000;will-change:transform}
-#cr p{margin:0 0 1.1cqw;text-wrap:balance}
-#cr .h{font:700 4.6cqw/1.15 var(--ui);color:var(--skin);margin-bottom:2cqw}
-#cr .gap{height:3.4cqw;margin:0}
-#cr .s{font-size:2.1cqw;opacity:.8}
+#cr{position:absolute;inset:0;display:grid;place-items:center;padding:0 9%;color:var(--paper);text-align:center;text-shadow:.2cqw .2cqw 0 #000b,0 0 1.6cqw #000}
+#cr p{grid-area:1/1;margin:0;opacity:0;font:400 3.7cqw/1.3 var(--hand);text-wrap:balance}
+#cr .h{font:700 6cqw/1.15 var(--ui);color:var(--skin)}
+#cr .s{font-size:3cqw;color:#fff4e8cc}
 #cr .r{color:var(--skin);font:500 .9em var(--ui)}
 #cend{position:absolute;right:2.6cqw;bottom:2.6cqw;display:none;font-size:2cqw;padding:.7cqw 1.8cqw;box-shadow:.4cqw .4cqw 0 var(--ink)}
 #cend.on{display:block;animation:fadein .8s}
@@ -191,10 +190,10 @@ const STORY_URL="story.txt";
 let P=[],LAB={},CH={},BG={},META={title:"A Date with Maya",subtitle:""},SPR={},CGS={},TRACKS={};
 function compile(src){
   P=[];LAB={};CH={};BG={};SPR={};CGS={};TRACKS={};META={title:"Visual Novel",subtitle:""};
-  let ch=null,cr=null,m;
+  let ch=null,cr=null,crs=74,m;
   src.split(/\r?\n/).forEach((raw,i)=>{
     const l=raw.trim();
-    if(cr){if(l=="end credits"){P.push({t:"credits",rows:cr});cr=null;return}if(l&&l[0]=="#")return;cr.push(l);return}
+    if(cr){if(l=="end credits"){P.push({t:"credits",rows:cr,secs:crs});cr=null;return}if(l&&l[0]=="#")return;cr.push(l);return}
     if(!l||l[0]=="#")return;
     const bad=()=>{throw new Error("Line "+(i+1)+": "+l)};
     if(ch){
@@ -203,7 +202,7 @@ function compile(src){
       ch.push({x:m[1],c:m[2],l:m[3]});return;
     }
     if(l=="choice"){ch=[];return}
-    if(l=="credits"){cr=[];return}
+    if(m=l.match(/^credits(?:\s+(\d+))?$/)){cr=[];crs=+m[1]||74;return}
     if(m=l.match(/^title\s+(.+)/)){META.title=m[1];return}
     if(m=l.match(/^subtitle\s+(.+)/)){META.subtitle=m[1];return}
     if(m=l.match(/^char\s+(\w+)\s+"(.+?)"\s+(#\w+)/)){CH[m[1]]={n:m[2],c:m[3]};return}
@@ -303,43 +302,66 @@ function setMusic(m){const t=TRACKS[m];
   if(!t){Aud.start(m);return}
   Aud.start("off");if(nowTrack===t)return;
   nowTrack=t;clearInterval(t.fo);
-  const a=t.a||(t.a=new Audio(t.src));a.loop=true;if(a.currentTime)a.currentTime=0;a.volume=0;
+  const a=t.a||(t.a=new Audio(t.src));a.loop=false;if(a.currentTime)a.currentTime=0;a.volume=0;
   const pl=a.play();if(pl&&pl.catch)pl.catch(()=>{});
   clearInterval(fadeT);let v=0;fadeT=setInterval(()=>{v=Math.min(Aud.vol,v+Aud.vol/20);a.volume=v;if(v>=Aud.vol)clearInterval(fadeT)},100);
   nowPlaying(t)}
 
-/* ---------- Credits ---------- */
-let creditsAnim=null,creditsT=null,crHeld=false;
-function crHold(on){if(!creditsAnim)return;
-  if(on&&creditsAnim.playState=="running"){creditsAnim.pause();crHeld=true}
-  else if(!on&&crHeld){creditsAnim.play();crHeld=false}}
-function stopCredits(){clearInterval(creditsT);crHeld=false;
-  if(creditsAnim){creditsAnim.onfinish=null;creditsAnim.cancel();creditsAnim=null}
+/* ---------- Credits ----------
+   One line at a time: fade in, hold 1-5 s, fade out. The holds are stretched so the whole roll lasts exactly as long as the song. */
+let creditsAnims=[],creditsT=null,crHeld=false,creditsRun=0;
+const CR_FADE=1.2,CR_GAP=.8,CR_MIN=1,CR_MAX=5;
+function creditsPlan(items,T){
+  const lines=items.filter(i=>!i.gap),gaps=items.length-lines.length;
+  let remain=T-gaps*CR_GAP-lines.length*2*CR_FADE;
+  const w=lines.map(l=>1+l.len/25),hold=lines.map(()=>0);let active=lines.map((_,i)=>i);
+  while(active.length){                              /* longer lines get longer holds; clamp to 1-5 s and share out the rest */
+    const sw=active.reduce((a,i)=>a+w[i],0),bad=active.filter(i=>{const h=remain*w[i]/sw;return h<CR_MIN||h>CR_MAX});
+    if(!bad.length){active.forEach(i=>hold[i]=remain*w[i]/sw);break}
+    bad.forEach(i=>{const h=remain*w[i]/sw,c=h<CR_MIN?CR_MIN:CR_MAX;hold[i]=c;remain-=c});
+    active=active.filter(i=>!bad.includes(i))}
+  let t=0,k=0;const plan=[];
+  items.forEach(i=>{if(i.gap){t+=CR_GAP;return}const h=hold[k++];plan.push({start:t,fade:CR_FADE,hold:h});t+=2*CR_FADE+h});
+  plan.total=t;return plan}
+function crHold(on){if(!creditsAnims.length)return;const a=nowTrack&&nowTrack.a;
+  if(on&&!crHeld){creditsAnims.forEach(x=>x.playState=="running"&&x.pause());crHeld=true;if(a)a.pause()}
+  else if(!on&&crHeld){creditsAnims.forEach(x=>x.playState=="paused"&&x.play());crHeld=false;if(a){const pl=a.play();if(pl&&pl.catch)pl.catch(()=>{})}}}
+function stopCredits(){creditsRun++;clearInterval(creditsT);crHeld=false;
+  creditsAnims.forEach(x=>{x.onfinish=null;x.cancel()});creditsAnims=[];
   const r=$("#credits"),was=r.classList.contains("on");r.classList.remove("on");$("#cend").classList.remove("on");
   if(was)$("#hud").style.display="flex"}
 function runCredits(p){
   skip=auto=false;sync();clearTimeout(autoT);setTalk(null);busy=true;
-  $("#box").style.display="none";$("#choices").innerHTML="";$("#hud").style.display="none";
-  const root=$("#credits"),col=$("#cr"),btn=$("#cend"),st=$("#stage");
-  stopCredits();$("#hud").style.display="none";
-  col.innerHTML=p.rows.map(r=>{
-    if(!r)return'<p class="gap"></p>';
-    const t=interp(r);
-    if(t[0]=="!")return'<p class="h">'+esc(t.slice(1).trim())+'</p>';
-    if(t[0]=="~")return'<p class="s">'+esc(t.slice(1).trim())+'</p>';
-    const m=t.match(/^(.+?) - (.+)$/);
-    return m?'<p><span class="r">'+esc(m[1])+' -</span> '+esc(m[2])+'</p>':'<p>'+esc(t)+'</p>'}).join("");
-  col.style.transform="translateY("+st.clientHeight+"px)";
+  $("#box").style.display="none";$("#choices").innerHTML="";
+  const root=$("#credits"),col=$("#cr"),btn=$("#cend");
+  stopCredits();$("#hud").style.display="none";const run=creditsRun;
+  const items=p.rows.map(r=>{
+    if(!r)return{gap:true};
+    const t=interp(r);let cls="",h;
+    if(t[0]=="!"){cls="h";h=esc(t.slice(1).trim())}
+    else if(t[0]=="~"){cls="s";h=esc(t.slice(1).trim())}
+    else{const m=t.match(/^(.+?) - (.+)$/);h=m?'<span class="r">'+esc(m[1])+' -</span> '+esc(m[2]):esc(t)}
+    return{cls,h,len:t.length}});
+  col.innerHTML=items.filter(i=>!i.gap).map(i=>'<p class="'+i.cls+'">'+i.h+'</p>').join("");
   root.classList.add("on");
   /* background: every CG, darkened and blurred, crossfading one after another */
   const ks=Object.keys(CGS),L=root.querySelectorAll(".cbg");let k=0,top=0;
   L.forEach(e=>e.classList.remove("on"));
   const put=()=>{const el=L[top];el.style.backgroundImage='url("'+resolve(CGS[ks[k%ks.length]].src)+'")';el.classList.add("on");L[1-top].classList.remove("on");top=1-top;k++};
   if(ks.length){put();if(ks.length>1)creditsT=setInterval(put,7000)}
-  requestAnimationFrame(()=>{
-    const sh=st.clientHeight,sw=st.clientWidth,H=col.offsetHeight,end=sh/2-H+sw*.02;
-    creditsAnim=col.animate([{transform:"translateY("+sh+"px)"},{transform:"translateY("+end+"px)"}],{duration:(sh-end)/(sw*.042)*1000,easing:"linear",fill:"forwards"});
-    creditsAnim.onfinish=()=>btn.classList.add("on")})}
+  const go=()=>{
+    if(run!==creditsRun)return;
+    const a=nowTrack&&nowTrack.a,T=a&&isFinite(a.duration)&&a.duration>10?a.duration-a.currentTime:p.secs;
+    const plan=creditsPlan(items,T),els=col.children;
+    plan.forEach((s,i)=>{const D=(2*s.fade+s.hold)*1000,f=s.fade*1000/D;
+      const an=els[i].animate([{opacity:0,transform:"translateY(1.2cqw)"},{opacity:1,transform:"none",offset:f},{opacity:1,transform:"none",offset:1-f},{opacity:0,transform:"translateY(-.6cqw)"}],
+        {duration:D,delay:s.start*1000,fill:"both",easing:"linear"});
+      creditsAnims.push(an);if(i==plan.length-1)an.onfinish=()=>btn.classList.add("on")});
+    if(!plan.length)btn.classList.add("on")};
+  /* start the roll when the song really starts playing (it may still be loading), with a fallback */
+  const a=nowTrack&&nowTrack.a;
+  if(a&&a.readyState<3){let t;const fire=()=>{clearTimeout(t);a.removeEventListener("playing",fire);go()};a.addEventListener("playing",fire);t=setTimeout(fire,3500)}
+  else go()}
 
 /* ---------- Engine ---------- */
 let lastWho="",hist=[],cur=null,typing=null,auto=false,skip=false,autoT=null,flip=0,busy=false,waitT=null,waiting=false,SPK=null;
@@ -411,7 +433,6 @@ function choose(p){
     b.onclick=e=>{e.stopPropagation();S.pc=LAB[o.l];run()};b.dataset.k=k;b.style.setProperty("--k",k-1);box.appendChild(b)});
 }
 function advance(){
-  if(creditsAnim){if(creditsAnim.playState!="finished")creditsAnim.playbackRate=creditsAnim.playbackRate>1?1:4;return}
   if(busy)return;
   if(typing){clearInterval(typing);typing=null;$("#text").textContent=cur.txt;$("#next").style.visibility="visible";
     if(auto){clearTimeout(autoT);autoT=setTimeout(advance,900+cur.txt.length*45)}return}
