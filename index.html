@@ -153,10 +153,16 @@ button:active{transform:translate(.2cqw,.2cqw)}
 #np div{display:flex;flex-direction:column;line-height:1.15}
 #np b{font:600 1.9cqw var(--ui)}
 #np span{font:400 1.7cqw var(--hand);opacity:.8}
+#splash{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:0 8vw;background:#000;color:var(--paper);font:500 clamp(18px,2.6vw,36px) var(--ui);text-align:center;cursor:pointer;transition:opacity .6s}
+#splash.out{opacity:0;pointer-events:none}
+#splash span{animation:splashpulse 2.4s ease-in-out infinite}
+@keyframes splashpulse{50%{opacity:.4}}
+body.splash #title{display:none!important}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
-<body>
+<body class="splash">
+<div id="splash" role="button" tabindex="0"><span>click here so audio can play</span></div>
 <div id="wrap"><div id="stage">
   <div class="bg" id="b1"></div><div class="bg" id="b2" style="opacity:0"></div>
   <div id="sprites"></div><div id="cg"></div><div id="fx"></div><div id="vig"></div>
@@ -191,7 +197,7 @@ const STORY_URL="story.txt";
 /* ---------- Compiler ---------- */
 let P=[],LAB={},CH={},BG={},META={title:"A Date with Maya",subtitle:""},SPR={},CGS={},TRACKS={};
 function compile(src){
-  P=[];LAB={};CH={};BG={};SPR={};CGS={};TRACKS={};META={title:"Visual Novel",subtitle:""};
+  P=[];LAB={};CH={};BG={};SPR={};CGS={};TRACKS={};META={title:"Visual Novel",subtitle:"",menu:""};
   let ch=null,cr=null,crs=74,m;
   src.split(/\r?\n/).forEach((raw,i)=>{
     const l=raw.trim();
@@ -206,6 +212,7 @@ function compile(src){
     if(l=="choice"){ch=[];return}
     if(m=l.match(/^credits(?:\s+(\d+))?$/)){cr=[];crs=+m[1]||74;return}
     if(m=l.match(/^title\s+(.+)/)){META.title=m[1];return}
+    if(m=l.match(/^menumusic\s+(\w+)/)){META.menu=m[1];return}
     if(m=l.match(/^subtitle\s+(.+)/)){META.subtitle=m[1];return}
     if(m=l.match(/^char\s+(\w+)\s+"(.+?)"\s+(#\w+)/)){CH[m[1]]={n:m[2],c:m[3]};return}
     if(m=l.match(/^bg\s+(\w+)\s+(.+)/)){BG[m[1]]=m[2];return}
@@ -220,7 +227,7 @@ function compile(src){
     if(m=l.match(/^set\s+(\w+)\s*(=|\+=|-=)\s*(.+)/)){P.push({t:"set",v:m[1],o:m[2],e:m[3]});return}
     if(m=l.match(/^if\s+(.+?)\s+jump\s+(\w+)$/)){P.push({t:"if",c:m[1],l:m[2]});return}
     if(m=l.match(/^jump\s+(\w+)$/)){P.push({t:"jump",l:m[1]});return}
-    if(m=l.match(/^track\s+(\w+)\s+"(.+?)"\s+"(.+?)"\s+"(.+?)"(?:\s+"(.+?)")?$/)){TRACKS[m[1]]={src:m[2],title:m[3],artist:m[4],cover:m[5]||""};return}
+    if(m=l.match(/^track\s+(\w+)\s+"([^"]+)"(?:\s+"([^"]+)"\s+"([^"]+)"(?:\s+"([^"]+)")?)?$/)){TRACKS[m[1]]={src:m[2],title:m[3]||"",artist:m[4]||"",cover:m[5]||""};return}
     if(m=l.match(/^music\s+(\w+)/)){P.push({t:"music",m:m[1]});return}
     if(m=l.match(/^ask\s+(\w+)\s+"(.+?)"(?:\s+"(.*)")?$/)){P.push({t:"ask",v:m[1],q:m[2],d:m[3]||""});return}
     if(m=l.match(/^wait(?:\s+(\d+(?:\.\d+)?))?$/)){P.push({t:"wait",s:+m[1]||1});return}
@@ -282,7 +289,7 @@ function preload(){PRE.length=0;
 const Aud={ctx:null,timer:null,mode:"off",vol:store.get("maya_vol",.5),
   start(m){this.mode=m;clearInterval(this.timer);if(m=="off"||this.vol==0)return;
     try{this.ctx=this.ctx||new (window.AudioContext||window.webkitAudioContext)()}catch(e){return}
-    const chords={calm:[[220,277,330],[196,247,294],[175,220,262],[196,247,330]],tense:[[110,131,165],[104,123,156]]}[m]||[];let i=0;
+    const chords={calm:[[220,277,330],[196,247,294],[175,220,262],[196,247,330]],tense:[[110,131,165],[104,123,156]]}[m]||[];if(!chords.length)return;let i=0;
     const play=()=>{const c=this.ctx;if(!c||c.state=="closed")return;if(c.state=="suspended")c.resume();
       chords[i++%chords.length].forEach(f=>{const o=c.createOscillator(),g=c.createGain();o.type=m=="tense"?"sawtooth":"sine";o.frequency.value=f;
         const t=c.currentTime;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.05*this.vol*(m=="tense"?.5:1),t+1.2);g.gain.linearRampToValueAtTime(0,t+3.6);
@@ -292,20 +299,28 @@ const Aud={ctx:null,timer:null,mode:"off",vol:store.get("maya_vol",.5),
 Aud.sfx=function(f,d=.04,g=.05){const v=store.get("maya_sfx",.4);if(!v)return;try{this.ctx=this.ctx||new (window.AudioContext||window.webkitAudioContext)();const c=this.ctx;if(c.state=="suspended")c.resume();const o=c.createOscillator(),a=c.createGain(),t=c.currentTime;o.type="triangle";o.frequency.value=f*(1+Math.random()*.08);a.gain.setValueAtTime(g*v,t);a.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(a).connect(c.destination);o.start(t);o.stop(t+d)}catch(e){}};
 /* ---------- Music files (track lines in story.txt) ---------- */
 let nowTrack=null,fadeT=null;
-function nowPlaying(t){const np=$("#np");np.classList.remove("on");if(!t)return;
+function nowPlaying(t){const np=$("#np");np.classList.remove("on");if(!t||!t.title)return;
   $("#npt").textContent=t.title;$("#nps").textContent=t.artist;
   const im=$("#npc");if(t.cover){im.style.display="";im.onerror=()=>{im.style.display="none"};im.src=t.cover}else im.style.display="none";
   void np.offsetWidth;np.classList.add("on")}
 function stopTrack(){const t=nowTrack;nowTrack=null;clearInterval(fadeT);nowPlaying(null);
   if(t&&t.a){const a=t.a;let v=a.volume;clearInterval(t.fo);t.fo=setInterval(()=>{v=Math.max(0,v-.08);a.volume=v;if(v<=0){clearInterval(t.fo);a.pause()}},60)}}
+/* Browsers block audio until the player interacts, so if play() is refused we retry on the first click / key / tap. */
+let lockedTrack=null,lockOn=false;
+function unlockAudio(t){lockedTrack=t;if(lockOn)return;lockOn=true;
+  const ev=["pointerdown","click","keydown","touchend"];
+  const off=()=>{ev.forEach(e=>document.removeEventListener(e,h,true));lockOn=false;lockedTrack=null};
+  const h=()=>{const k=lockedTrack;if(!k||nowTrack!==k){off();return}
+    const pl=k.a.play();if(pl&&pl.then)pl.then(off,()=>{});else off()};
+  ev.forEach(e=>document.addEventListener(e,h,true))}
 /* One entry point for all music: a track name plays that file; anything else (calm, tense, off) is the built-in pad. */
 function setMusic(m){const t=TRACKS[m];
   if(nowTrack&&nowTrack!==t)stopTrack();
   if(!t){Aud.start(m);return}
   Aud.start("off");if(nowTrack===t)return;
   nowTrack=t;clearInterval(t.fo);
-  const a=t.a||(t.a=new Audio(t.src));a.loop=false;if(a.currentTime)a.currentTime=0;a.volume=0;
-  const pl=a.play();if(pl&&pl.catch)pl.catch(()=>{});
+  const a=t.a||(t.a=new Audio(t.src));a.loop=(m===META.menu);if(a.currentTime)a.currentTime=0;a.volume=0;
+  const pl=a.play();if(pl&&pl.catch)pl.catch(()=>unlockAudio(t));
   clearInterval(fadeT);let v=0;fadeT=setInterval(()=>{v=Math.min(Aud.vol,v+Aud.vol/20);a.volume=v;if(v>=Aud.vol)clearInterval(fadeT)},100);
   nowPlaying(t)}
 
@@ -457,7 +472,7 @@ function startGame(st){asking=false;clearTimeout(waitT);waiting=false;SPK=null;
   S=st||newState();hist=[];stopCredits();renderScene(true);setMusic(S.mu);run();
 }
 function toTitle(){
-  auto=skip=false;sync();clearTimeout(autoT);clearInterval(typing);clearTimeout(waitT);waiting=false;SPK=null;stopCredits();setMusic("off");
+  auto=skip=false;sync();clearTimeout(autoT);clearInterval(typing);clearTimeout(waitT);waiting=false;SPK=null;stopCredits();setMusic(META.menu||"off");
   $("#title").style.display="block";$("#hud").style.display="none";$("#box").style.display="none";$("#choices").innerHTML="";$("#sprites").innerHTML="";
   $("#tt").innerHTML=META.title.split(" ").map((w,i)=>`<span style="--i:${i}">${esc(w)}</span>`).join(" ");fillSprite($("#art"),CH.maya?"maya":Object.keys(CH)[0],"menu");document.title=META.title;$("#cg").style.opacity=0;$("#cg").dataset.n="";$("#stage").classList.remove("hideui");$("#bcont").style.display=Object.keys(store.get("maya_saves",{})).length?"":"none";
   $("#b1").style.opacity=0;$("#b2").style.opacity=0;$("#b1").dataset.k="";$("#b2").dataset.k="";
@@ -573,6 +588,11 @@ $("#title").addEventListener("pointermove",e=>{const r=$("#stage").getBoundingCl
 $("#stage").addEventListener("contextmenu",e=>{if($("#title").style.display!="none")return;e.preventDefault();$("#stage").classList.toggle("hideui")});
 document.addEventListener("wheel",e=>{if(e.deltaY<0&&$("#title").style.display=="none"&&!$("#panel").classList.contains("open"))rollback()},{passive:true});
 
+/* Black "click here" cover: the click is the interaction browsers need before they will play audio. */
+(function(){const sp=$("#splash");let done=false;
+  const go=()=>{if(done)return;done=true;document.body.classList.remove("splash");sp.classList.add("out");setTimeout(()=>sp.remove(),700)};
+  sp.addEventListener("click",go);
+  document.addEventListener("keydown",e=>{if(!done&&(e.key=="Enter"||e.key==" ")){e.preventDefault();go()}})})();
 loadStory();
 </script>
 </body>
