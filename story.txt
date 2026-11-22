@@ -225,14 +225,16 @@ mc: thanks for reading and playing a date with maya, more updates soon
 
 # ------------------------------------------------------------
 #  CREDITS
-#  Over a dark, blurred background that cycles through every CG.
-#  Formatting: "! text" = big heading, "~ text" = small dim line,
-#  "Role - Name" = role in colour, an empty line = a gap.
-#  Click or press Space during the roll to speed it up (again to slow down).
+#  Each line fades in, stays 1-5 seconds and fades out, one at a time, over a dark,
+#  blurred background that cycles through every CG. The timing is stretched so the roll
+#  lasts exactly as long as the song. The song's real length is read from the audio file;
+#  the number after "credits" (1:14 = 74 seconds) is only a fallback.
+#  Formatting: "! text" = big heading, "~ text" = smaller dim line,
+#  "Role - Name" = role in colour, an empty line = a short pause with just the background.
 # ------------------------------------------------------------
 wait 1.5
 music ikbenhetmaar
-credits
+credits 74
 ! A Visual Novel by kerosene
 
 Writing - kerosene
@@ -246,7 +248,7 @@ literally this wouldnt exist including mayawin of it wasnt for Massa
 
 thank you for playing this gemmy vn, zov legends. till we meet again!
 
-~ maybe a maya one?
+~ maybe a mymy one?
 
 ~ fuck no lol
 end credits
