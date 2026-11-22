@@ -27,6 +27,12 @@ char maya "Maya" #a8241a
 char mc "{player}" #3d5a80
 char soei "Soei" #6b8f71
 
+# --- RESERVED NAMES ---
+# Names the player is not allowed to pick for themselves. Separate with commas.
+# Case, accents, spaces and punctuation are ignored, and a name is also refused when it
+# appears as a whole word (so "vera smith" is blocked but "Veracruz" is fine).
+reservednames Maya, Mymy, Coco, Soei, Vera, Ravi
+
 # --- BACKGROUNDS (files go in the images folder) ---
 bg black #000
 bg classroom images/classroom.png
