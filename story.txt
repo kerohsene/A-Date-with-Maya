@@ -12,6 +12,8 @@
 #   hide maya            remove a sprite
 #   wait 1.5             hide the text box and pause 1.5 seconds (plain "wait" = 1)
 #   cg name / cg off     show / leave full-screen event art (unlocks in the Gallery)
+#   music name           play a song defined with "track" (or the built-in pads: calm, tense; "music off" stops)
+#   credits ... end credits   a scrolling credits roll (see the bottom of this file)
 #   end                  finish the story
 #   {player}             the name typed on New Game
 #
@@ -53,6 +55,11 @@ sprite soei neutral_talk images/soei_talk.png
 
 # --- CGS ---
 cg crycg images/maya_crycg.png "Maya in tears"
+
+# --- MUSIC ---
+# track name "audio file" "Song title" "Artist" "cover image"
+# While a track plays, a little card with the cover, title and artist shows in the bottom left.
+track ikbenhetmaar "music/Ik ben het maar.mp3" "Ik ben het maar" "Studio Massa" "images/Ik ben het maar.jpeg"
 
 # ============================================================
 #  CHAPTER 1
@@ -216,5 +223,31 @@ mc: Yeah?
 maya: .. the story isnt finished and im leaving off right here
 mc: thanks for reading and playing a date with maya, more updates soon
 
-# Credits: thank you ZOV legends at mayapaint.ink, and always luv maya as she will always love you back :>)
+# ------------------------------------------------------------
+#  CREDITS
+#  Over a dark, blurred background that cycles through every CG.
+#  Formatting: "! text" = big heading, "~ text" = small dim line,
+#  "Role - Name" = role in colour, an empty line = a gap.
+#  Click or press Space during the roll to speed it up (again to slow down).
+# ------------------------------------------------------------
+wait 1.5
+music ikbenhetmaar
+credits
+! A Visual Novel by kerosene
+
+Writing - kerosene
+Sprite Art - kerosene
+BG - a nerd and kerosene
+Music - kerosene, Studio Massa
+
+Characters by Studio Massa
+Maya by Studio Massa
+literally this wouldnt exist including mayawin of it wasnt for Massa
+
+thank you for playing this gemmy vn, zov legends. till we meet again!
+
+~ maybe a maya one?
+
+~ fuck no lol
+end credits
 end
