@@ -15,6 +15,7 @@
 #   menumusic name       the song for the title screen (defined with "track")
 #   music name           play a song defined with "track" (or the built-in pads: calm, tense; "music off" stops)
 #   credits ... end credits   a timed credits roll, one line at a time (see the bottom of this file)
+#   paper ... end paper       a sheet of paper shown full screen; click to turn to the next one
 #   end                  finish the story
 #   {player}             the name typed on New Game
 #
@@ -71,6 +72,9 @@ track ikbenhetmaar "music/Ik ben het maar.mp3" "Ik ben het maar" "Studio Massa" 
 # Main menu song: plays on the title screen (and whenever you come back to it) and loops.
 # It has no title/artist, so no now-playing card shows. Add "Song title" "Artist" after the file to show one.
 track menu "music/Naar Huis (Going Home).mp3"
+
+# Reprise: plays after the credits, on a loop (the word "loop" at the end makes a track repeat).
+track reprise "music/Naar Huis (Reprise).mp3" loop
 menumusic menu
 
 # ============================================================
@@ -260,8 +264,33 @@ literally this wouldnt exist including mayawin of it wasnt for Massa
 
 thank you for playing this gemmy vn, zov legends. till we meet again!
 
-~ maybe a mymy or coco one?
+~ maybe a maya one?
 
 ~ fuck no lol
 end credits
+
+# ------------------------------------------------------------
+#  LETTERS
+#  Once the credits finish, the reprise starts (looping) and two pieces of paper are shown one
+#  at a time. Click to turn the page; after the last one a "Back to title" button appears.
+#  Formatting: the first line is the heading, an empty line starts a new paragraph with a gap,
+#  and a line starting with ">" is a sign-off, aligned right. The writing shrinks to fit the sheet.
+# ------------------------------------------------------------
+wait 1.5
+music reprise
+
+paper
+To Mayawin:
+Ever since I've came across Mayawin as a Maya lover myself, I have just felt so much joy. Not just from Maya, but from everyone on the site. It is so nice to be in a community where we all love Maya. Again, thank you Mayawin for making me experience this happiness.
+end paper
+
+paper
+Ongezellig:
+Although It isn't the best fandom, I still love the show. I love the premise, highschool dutch/belgian unsociable girl being a shy little incel, while having 2 sisters that share no similar traits. It's sad to see a show with much potential be thrown into the trash like that with Ongezellig not being picked up, Studio Massa not being able to fund the show, yatta yatta. Again with the fandom, the reason why I think its gone to actual caca is Mymy. With what we got, Mymy being edgy high schooler planning to do a "schoolocaust". You can see how the wrong type of people got interested, aka, TCC/people who love mass shooters. To end this off on a "good" note, I like to thank Massa for making and putting effort into Ongezellig, without him, we would be nothing.
+
+Thank you, for reading A Date With Maya.
+
+> Sincerely, kerosene.
+end paper
+
 end
